@@ -1,7 +1,9 @@
 import os
 import sys
 import math
+import random
 import pygame as pg
+from pygame.sprite import AbstractGroup
 
 WIDTH = 1600
 HEIGHT = 900
@@ -85,6 +87,49 @@ class Card:
     def update(self, screen: pg.Surface):
         screen.blit(self.img, self.rct)
         
+
+class Hit(pg.sprite.Sprite):
+    """
+    ヒットに関するクラス
+    """
+    def __init__(self, card: Card):
+        """
+        新たにトランプを一枚引く
+        引数1 card：直前に引いたカード
+        """
+        super().__init__()
+        gara = ["h", "s", "d", "k"]
+        num = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"]
+        self.img = pg.transform.rotozoom(pg.image.load(f'{MAIN_DIR}/playingcard-mini/{Card.card[random.choice(gara)][random.choice(num)]}'), 0, 2.0)
+        self.rct = self.img.get_rect()
+        self.rct.centerx = card.rct.centerx + 20
+        self.rct.centery = card.rct.centery + 20
+
+    def update(self, screen: pg.Surface):
+        screen.blit(self.img, self.rct)
+
+
+class Stand(pg.sprite.Sprite):
+    """
+    スタンドに関するクラス
+    """
+    def __init__(self, life: int):
+        # スタンドと表示する
+        super().__init__()
+        self.font = pg.font.Font(None, 50)
+        self.color = (255, 0, 0)
+        self.image = self.font.render(f"Stand", 0, self.color)
+        self.rect = self.image.get_rect()
+        self.rect.center = WIDTH/2, HEIGHT/2
+        self.life = life
+
+    def update(self, screen: pg.Surface):
+        self.image = self.font.render(f"Stand", 0, self.color)
+        screen.blit(self.image, self.rect)
+        self.life -= 1
+        if self.life < 0:
+            self.kill()
+
     
 
 def main():
@@ -92,14 +137,26 @@ def main():
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     # 背景
     card = Card("d",'A')
+    hit = pg.sprite.Group()
+    stand = pg.sprite.Group()
     clock = pg.time.Clock()
     tmr = 0
     while True:
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 return
+        
+            # h押下でヒット
+            if event.type == pg.KEYDOWN and event.key == pg.K_h:
+                hit.add(Hit(card))
+            
+            # s押下でスタンド
+            if event.type == pg.KEYDOWN and event.key == pg.K_s:
+                stand.add(Stand(60))
             
         card.update(screen)
+        hit.update(screen)
+        stand.update(screen)
         pg.display.update()
         tmr += 1
         clock.tick(50)
