@@ -5,8 +5,8 @@ import random
 import pygame as pg
 from pygame.sprite import AbstractGroup
 
-WIDTH = 1600
-HEIGHT = 900
+WIDTH = 1200  # デフォルト1600
+HEIGHT = 600  # デフォルト900
 MAIN_DIR = os.path.split(os.path.abspath(__file__))[0]
 
 class Card:
@@ -92,18 +92,19 @@ class Hit(pg.sprite.Sprite):
     """
     ヒットに関するクラス
     """
-    def __init__(self, card: Card):
+    def __init__(self, card: Card, hit_num):
         """
         新たにトランプを一枚引く
-        引数1 card：直前に引いたカード
+        引数1 card：持ち札のカード
+        引数2 hit_num：ヒットした回数
         """
         super().__init__()
         gara = ["h", "s", "d", "k"]
         num = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"]
         self.img = pg.transform.rotozoom(pg.image.load(f'{MAIN_DIR}/playingcard-mini/{Card.card[random.choice(gara)][random.choice(num)]}'), 0, 2.0)
         self.rct = self.img.get_rect()
-        self.rct.centerx = card.rct.centerx + 20
-        self.rct.centery = card.rct.centery + 20
+        self.rct.centerx = card.rct.centerx + 20*hit_num
+        self.rct.centery = card.rct.centery + 20*hit_num
 
     def update(self, screen: pg.Surface):
         screen.blit(self.img, self.rct)
@@ -141,6 +142,7 @@ def main():
     stand = pg.sprite.Group()
     clock = pg.time.Clock()
     tmr = 0
+    hit_num = 0  # プレイヤーがそのラウンドでヒットした回数
     while True:
         for event in pg.event.get():
             if event.type == pg.QUIT:
@@ -148,10 +150,12 @@ def main():
         
             # h押下でヒット
             if event.type == pg.KEYDOWN and event.key == pg.K_h:
-                hit.add(Hit(card))
+                hit_num += 1
+                hit.add(Hit(card, hit_num))
             
             # s押下でスタンド
             if event.type == pg.KEYDOWN and event.key == pg.K_s:
+                hit_num = 0  # ヒット回数のリセット
                 stand.add(Stand(60))
             
         card.update(screen)
